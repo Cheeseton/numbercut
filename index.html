@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรแกรมตัดเลข</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1e1e1e;
+            color: #fff;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            width: 80%;
+            max-width: 600px; /* Adjust the maximum width as needed */
+            margin: 0 auto;
+        }
+
+        .input-container,
+        .summary-container {
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 18px;
+            margin-bottom: 10px;
+            display: block;
+            color: #4caf50;
+        }
+
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button.reset {
+            background-color: #e53935;
+            margin-right: 0;
+        }
+
+        button.reset:hover {
+            background-color: #c2120f;
+            margin-right: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #333;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .summary {
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .summary table {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .summary th,
+        .summary td {
+            border: none;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .summary th {
+            font-weight: bold;
+            background-color: #4caf50;
+            color: white;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4caf50;
+            font-size: 24px;
+        }
+
+        .input-container {
+            background-color: #394240;
+        }
+
+        .summary-container {
+            background-color: #485a6e;
+        }
+
+        /* Media Query for smaller screens */
+        @media only screen and (max-width: 600px) {
+            .container {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="input-container">
+            <label for="left-input">3ตัว: </label>
+            <input type="text" id="left-input" pattern="[0-9]{3}" title="Please enter a 3-digit number (000-999)"
+                required>
+
+            <label for="right-input">ราคา: </label>
+            <input type="number" id="right-input" max="5000">
+
+            <button onclick="setValues()">Set</button>
+            <button onclick="submitValues()">Submit</button>
+            <button class="reset" onclick="resetValues()">Reset</button>
+
+            <!-- Output table -->
+            <table id="output-table">
+                <thead>
+                    <tr>
+                        <th>3ตัว</th>
+                        <th>ราคา</th>
+                        <th>รับ</th>
+                        <th>ส่วนต่าง</th>
+                        <th>จำนวนครั้ง</th>
+                    </tr>
+                </thead>
+                <tbody id="output-table-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Summary section -->
+        <div class="summary-container">
+            <h2>Summary</h2>
+            <div class="summary">
+                <table>
+                    <tr>
+                        <th>ราคา รวม</th>
+                        <td id="total-price">0</td>
+                    </tr>
+                    <tr>
+                        <th>ราคารับ รวม</th>
+                        <td id="total-received">0</td>
+                    </tr>
+                    <tr>
+                        <th>ผลต่าง รวม</th>
+                        <td id="total-difference">0</td>
+                    </tr>
+                    <tr>
+                        <th>จำนวนครั้ง รวม</th>
+                        <td id="total-count">0</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var runningTotalMap = new Map();
+
+        function submitValues() {
+            var leftValue = document.getElementById('left-input').value;
+            var rightValue = parseInt(document.getElementById('right-input').value);
+
+            if (!validateLeftInput(leftValue)) {
+                alert('Please enter a 3-digit number (000-999) for 3ตัว.');
+                return;
+            }
+
+            if (isNaN(rightValue)) {
+                alert('Please enter a valid number for ราคา.');
+                return;
+            }
+
+            if (runningTotalMap.has(leftValue)) {
+                var currentData = runningTotalMap.get(leftValue);
+                var updatedTotal = currentData.total + rightValue;
+                var updatedCount = currentData.count + 1;
+
+                runningTotalMap.set(leftValue, { total: updatedTotal, count: updatedCount });
+
+                updateOutputTable(leftValue, rightValue, updatedTotal, updatedCount);
+            } else {
+                runningTotalMap.set(leftValue, { total: rightValue, count: 1 });
+
+                updateOutputTable(leftValue, rightValue, rightValue, 1);
+            }
+
+            document.getElementById('left-input').value = '';
+            document.getElementById('right-input').value = '';
+
+            updateSummary();
+        }
+
+        function setValues() {
+            var setNumber = prompt("กรุณากรอกค่าจำนวนเต็ม x:");
+
+            if (setNumber === null || setNumber === "") {
+                return;
+            }
+
+            var intValue = parseInt(setNumber);
+
+            if (isNaN(intValue) || intValue <= 0) {
+                alert("กรุณากรอกค่าจำนวนเต็มที่มีค่ามากกว่า 0");
+                return;
+            }
+
+            setup = intValue;
+        }
+
+        function validateLeftInput(value) {
+            var pattern = /^[0-9]{3}$/;
+            return pattern.test(value);
+        }
+
+        function updateOutputTable(leftValue, rightValue, totalValue, count) {
+            var outputTableBody = document.getElementById('output-table-body');
+            var existingRow = findRowByLeftValue(outputTableBody, leftValue);
+
+            if (existingRow) {
+                existingRow.cells[1].innerHTML = totalValue;
+                existingRow.cells[2].innerHTML = Math.min(totalValue, setup);
+                existingRow.cells[3].innerHTML = Math.max(totalValue - setup, 0);
+                existingRow.cells[4].innerHTML = count;
+            } else {
+                var newRowPosition = findRowPositionToInsert(outputTableBody, leftValue);
+                var newRow = outputTableBody.insertRow(newRowPosition);
+
+                var cells = Array.from({ length: 5 }, (_, index) => newRow.insertCell(index));
+                cells[0].innerHTML = leftValue;
+                cells[1].innerHTML = totalValue;
+                cells[2].innerHTML = Math.min(totalValue, setup);
+                cells[3].innerHTML = Math.max(totalValue - setup, 0);
+                cells[4].innerHTML = count;
+            }
+        }
+
+        function findRowByLeftValue(tableBody, leftValue) {
+            for (var i = 0; tableBody && i < tableBody.rows.length; i++) {
+                if (tableBody.rows[i].cells[0].innerHTML === leftValue) {
+                    return tableBody.rows[i];
+                }
+            }
+            return null;
+        }
+
+        function findRowPositionToInsert(tableBody, leftValue) {
+            for (var i = 0; tableBody && i < tableBody.rows.length; i++) {
+                var currentLeftValue = tableBody.rows[i].cells[0].innerHTML;
+                if (leftValue < currentLeftValue) {
+                    return i;
+                }
+            }
+            return tableBody ? tableBody.rows.length : 0;
+        }
+
+        function updateSummary() {
+            var totalPrice = 0;
+            var totalReceived = 0;
+            var totalDifference = 0;
+            var totalCount = 0;
+
+            runningTotalMap.forEach((value) => {
+                totalPrice += value.total;
+                totalReceived += Math.min(value.total, setup);
+                totalDifference += Math.max(value.total - setup, 0);
+                totalCount += value.count;
+            });
+
+            document.getElementById('total-price').innerHTML = totalPrice;
+            document.getElementById('total-received').innerHTML = totalReceived;
+            document.getElementById('total-difference').innerHTML = totalDifference;
+            document.getElementById('total-count').innerHTML = totalCount;
+        }
+
+        function resetValues() {
+            // Ask for confirmation before resetting
+            var confirmReset = confirm("Are you sure you want to reset?");
+
+            if (confirmReset) {
+                // Clear the map and reset the setup variable
+                runningTotalMap.clear();
+                setup = 0;
+
+                // Clear the output table and summary
+                document.getElementById('output-table-body').innerHTML = '';
+                document.getElementById('total-price').innerHTML = '0';
+                document.getElementById('total-received').innerHTML = '0';
+                document.getElementById('total-difference').innerHTML = '0';
+                document.getElementById('total-count').innerHTML = '0';
+            }
+        }
+    </script>
+</body>
+
+</html>
